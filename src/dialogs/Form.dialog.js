@@ -289,7 +289,7 @@ export function UpdateProductInfo({rowData}) {
                                 </label><br/>
                                 <InputTextarea name='uv_vis_nir_features' autoResize value={formData?.uv_vis_nir_features} onChange={e=> setFormDataValue(e.target.name, e.target.value)} required rows={3} cols={20} />
                             </div>
-                            <FileUpload mode="basic" name="demo[]" url="http://149.165.159.139:3000/upload" maxFileSize={1000000} onUpload={onUpload} />
+                            {/*<FileUpload mode="basic" name="demo[]" url="http://149.165.159.139:3000/upload" maxFileSize={1000000} onUpload={onUpload} />*/}
                             <Button label="Submit" onClick={saveProduct}/>
                         </div>
                     </TabPanel>
