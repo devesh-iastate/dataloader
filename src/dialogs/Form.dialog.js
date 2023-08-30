@@ -8,8 +8,21 @@ import {Toast} from "primereact/toast";
 import {Calendar} from "primereact/calendar";
 import {InputText} from "primereact/inputtext";
 import {FileUpload} from "primereact/fileupload";
+import AWS from "aws-sdk";
+import UploadComponent from "./FIleUpload/UploadComponent";
+import {getDownloadURL, ref, uploadBytes} from "firebase/storage";
+import {storage} from "../firebase";
+import {v4} from "uuid";
+
+const allTypes = [   "uv_vis_nil_files" ,
+    "jv_files" ,
+    "profilometry_files" ,
+    "giwaxs_files" ,
+    "skpm_files" ]
 
 export function UpdateProductInfo({rowData}) {
+
+    console.log(rowData)
 
     let emptyProduct = {
         polymerInfo: ''
@@ -17,9 +30,55 @@ export function UpdateProductInfo({rowData}) {
 
     const [showProductInfo, setShowProductInfo] = useState(false);
     const [formData, setFormData] = useState( null);
+    const [imageNames, setImageNames] = useState([])  ;
     const [submitted, setSubmitted] = useState(false);
     const toast = useRef(null);
     const { user} = useContext(UserContext);
+    const [file, setFile] = useState(null);
+
+    const functionToSetFiles = ( acceptedFiles, type) => {
+
+        // const typeValues = file?.[type] || [];
+        // typeValues.push(...acceptedFiles);
+        debugger
+        setFile(prev => (
+            { ...prev, [type] : [ ...acceptedFiles ] }
+        ))
+    }
+
+    const uploadFile = async (fileTypeVal) => {
+        debugger
+        try {
+            // for ( let j=0; j<allTypes.length; j++) {
+            //     let typeVal = allTypes[j];
+            // // }
+            let newImageNames = {}
+                const typeVal = fileTypeVal
+                if (file?.[typeVal]?.length === 0 || !file?.[typeVal]) return [];
+                let promiseArr = [];
+                const newFileAddedTypeWise = []
+                for (let i = 0; i < file?.[typeVal]?.length || 0; i++) {
+                    const fileVal = file?.[typeVal]?.[i]
+                    const uuidVal = v4() + '_' + file?.[typeVal]?.[i].name
+                    const imageRef = ref(storage, `images/${uuidVal}`);
+                    let uploadPromise = await uploadBytes(imageRef, fileVal)
+                    newFileAddedTypeWise.push(uuidVal);
+                    promiseArr.push(uploadPromise);
+                }
+                const prevTypeWise = imageNames[typeVal] || [];
+                newImageNames = {...imageNames, [typeVal]: [...prevTypeWise, ...newFileAddedTypeWise]}
+                setImageNames(prev => ({...prev, [typeVal]: [...prevTypeWise, ...newFileAddedTypeWise]}))
+                await Promise.all(promiseArr)
+
+
+            return newImageNames;
+
+        }
+        catch (err){
+            return false;
+        }
+    };
+
 
     useEffect(()=>{
         setFormData({
@@ -39,13 +98,30 @@ export function UpdateProductInfo({rowData}) {
 
         };
 
-    const saveProduct = async () => {
+    const saveProduct = async (fileTypeVal) => {
+
         try{
+            let uploadValues = await uploadFile(fileTypeVal);
+            debugger
+            if(!uploadValues){
+                toast.current.show({severity: 'error', summary: 'Error', detail: 'Error in uploading files', life: 3000});
+                return;
+            }
             const functionName = "updateProductInfo";
-            const args = {...formData};
+            let args = { ...formData }
+            let typeValueObject = {}
+            for( const typeVal of allTypes){
+                const formTypeWise = formData?.[typeVal] || [];
+                if( uploadValues?.[typeVal] === undefined || uploadValues?.[typeVal]?.length === 0) continue;
+                formTypeWise.push(...uploadValues?.[typeVal])
+                typeValueObject = { ...typeValueObject, [typeVal] : formTypeWise}
+            }
+            args = { ...args, ...typeValueObject }
+            //const args = {...formData,  ...uploadValues  };
             let result = await user.callFunction(functionName, args);
             toast.current.show({severity: 'success', summary: 'Successful', detail: 'Product Info Updated', life: 3000});
             setShowProductInfo(false);
+            window.location.reload(true);
         }catch (e) {
             toast.current.show({severity: 'error', summary: 'Error', detail: 'Error in updating product info', life: 3000});
         }
@@ -266,7 +342,7 @@ export function UpdateProductInfo({rowData}) {
                                 </label><br/>
                                 <InputTextarea name='film_thickness_features' autoResize value={formData?.film_thickness_features} onChange={e=> setFormDataValue(e.target.name, e.target.value)} required rows={3} cols={20} />
                             </div>
-                            <Button label="Submit" onClick={saveProduct}/>
+                            <Button label="Submit" onClick={()=>saveProduct(allTypes[0])}/>
                         </div>
                     </TabPanel>
                     <TabPanel header="UV-Vis-NIL">
@@ -289,8 +365,23 @@ export function UpdateProductInfo({rowData}) {
                                 </label><br/>
                                 <InputTextarea name='uv_vis_nir_features' autoResize value={formData?.uv_vis_nir_features} onChange={e=> setFormDataValue(e.target.name, e.target.value)} required rows={3} cols={20} />
                             </div>
-                            {/*<FileUpload mode="basic" name="demo[]" url="http://149.165.159.139:3000/upload" maxFileSize={1000000} onUpload={onUpload} />*/}
-                            <Button label="Submit" onClick={saveProduct}/>
+                            <div className="field">
+                                <label className="font-bold">
+                                    Upload
+                                </label><br/>
+                                <UploadComponent setFile={functionToSetFiles} type={"uv_vis_nil_files"} />
+                            </div>
+                            <div>
+                                <label className="font-bold">
+                                    Uploaded Files
+                                </label><br/>
+                                <div>
+                                    { formData?.["uv_vis_nil_files"]?.map(val => <div>
+                                        <li>{val}</li>
+                                    </div>) }
+                                </div>
+                            </div>
+                            <Button label="Submit" onClick={()=>saveProduct(allTypes[0])}/>
                         </div>
                     </TabPanel>
                     <TabPanel header="J-V">
@@ -313,7 +404,25 @@ export function UpdateProductInfo({rowData}) {
                                 </label><br/>
                                 <InputTextarea name='jv_features' autoResize value={formData?.jv_features} onChange={e=> setFormDataValue(e.target.name, e.target.value)} required rows={3} cols={20} />
                             </div>
-                            <Button label="Submit" onClick={saveProduct}/>
+                            <div className="field">
+                                <label className="font-bold">
+                                    Upload
+                                </label><br/>
+                                <UploadComponent setFile={functionToSetFiles} type={"jv_files"} />
+                            </div>
+
+                            <div>
+                                <label className="font-bold">
+                                    Uploaded Files
+                                </label><br/>
+                                <div>
+                                    { formData?.["jv_files"]?.map(val => <div>
+                                        <li>{val}</li>
+                                    </div>) }
+                                </div>
+                            </div>
+                            {/*<Button label="Submit" onClick={saveProduct}/>*/}
+                            <Button label="Submit" onClick={()=>saveProduct(allTypes[1])}/>
                         </div>
                     </TabPanel>
                     <TabPanel header="Profilometry">
@@ -336,7 +445,24 @@ export function UpdateProductInfo({rowData}) {
                                 </label><br/>
                                 <InputTextarea name='profilometry_features' autoResize value={formData?.profilometry_features} onChange={e=> setFormDataValue(e.target.name, e.target.value)} required rows={3} cols={20} />
                             </div>
-                            <Button label="Submit" onClick={saveProduct}/>
+                            <div className="field">
+                                <label className="font-bold">
+                                    Upload
+                                </label><br/>
+                                <UploadComponent setFile={functionToSetFiles} type={"profilometry_files"} />
+                            </div>
+                            <div>
+                                <label className="font-bold">
+                                    Uploaded Files
+                                </label><br/>
+                                <div>
+                                    {/*{ formData?.["profilometry_files"]?.map(val => <div>*/}
+                                    {/*    <li>{val}</li>*/}
+                                    {/*</div>) }*/}
+                                </div>
+                            </div>
+                            {/*<Button label="Submit" onClick={saveProduct}/>*/}
+                            <Button label="Submit" onClick={()=>saveProduct(allTypes[2])}/>
                         </div>
                     </TabPanel>
                     <TabPanel header="Conductivity (from J-V & profilometry)">
@@ -383,7 +509,24 @@ export function UpdateProductInfo({rowData}) {
                                 </label><br/>
                                 <InputTextarea name='giwaxs_features' autoResize value={formData?.giwaxs_features} onChange={e=> setFormDataValue(e.target.name, e.target.value)} required rows={3} cols={20} />
                             </div>
-                            <Button label="Submit" onClick={saveProduct}/>
+                            <div className="field">
+                                <label className="font-bold">
+                                    Upload
+                                </label><br/>
+                                <UploadComponent setFile={functionToSetFiles} type={"giwaxs_files"} />
+                            </div>
+                            <div>
+                                <label className="font-bold">
+                                    Uploaded Files
+                                </label><br/>
+                                <div>
+                                    { formData?.["giwaxs_files"]?.map(val => <div>
+                                        <li>{val}</li>
+                                    </div>) }
+                                </div>
+                            </div>
+                            {/*<Button label="Submit" onClick={saveProduct}/>*/}
+                            <Button label="Submit" onClick={()=>saveProduct(allTypes[3])}/>
                         </div>
                     </TabPanel>
                     <TabPanel header="SKPM (UW)">
@@ -406,7 +549,24 @@ export function UpdateProductInfo({rowData}) {
                                 </label><br/>
                                 <InputTextarea name='skpm_features' autoResize value={formData?.skpm_features} onChange={e=> setFormDataValue(e.target.name, e.target.value)} required rows={3} cols={20} />
                             </div>
-                            <Button label="Submit" onClick={saveProduct}/>
+                            <div className="field">
+                                <label className="font-bold">
+                                    Upload
+                                </label><br/>
+                                <UploadComponent setFile={functionToSetFiles} type={"skpm_files"} />
+                            </div>
+                            <div>
+                                <label className="font-bold">
+                                    Uploaded Files
+                                </label><br/>
+                                <div>
+                                    { formData?.["skpm_files"]?.map(val => <div>
+                                        <li>{val}</li>
+                                    </div>) }
+                                </div>
+                            </div>
+                            {/*<Button label="Submit" onClick={saveProduct}/>*/}
+                            <Button label="Submit" onClick={()=>saveProduct(allTypes[4])}/>
                         </div>
                     </TabPanel>
                 </TabView>

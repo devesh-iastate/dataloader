@@ -35,6 +35,11 @@ export function DataForm(){
         fab_box: '',
         fab_humidity: '',
         other: '',
+        uv_vis_nil_files : [],
+        jv_files : [],
+        profilometry_files : [],
+        giwaxs_files : [],
+        skpm_files : []
     };
 
     const {user} = useContext(UserContext);
