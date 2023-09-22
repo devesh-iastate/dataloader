@@ -1,16 +1,8 @@
 
-import { useState, useEffect, useMemo } from "react";
-import {
-    ref,
-    uploadBytes,
-    getDownloadURL,
-    listAll,
-    list,
-} from "firebase/storage";
+import {useEffect, useMemo } from "react";
+
 import {useDropzone} from 'react-dropzone';
 
-import { storage } from "../../firebase";
-import { v4 } from "uuid";
 
 const baseStyle = {
     flex: 1,
@@ -42,7 +34,6 @@ const rejectStyle = {
 
 function UploadComponent({ setFile, type }) {
    // const [imageUpload, setImageUpload] = useState(null);
-    const [imageUrls, setImageUrls] = useState([]);
     const {acceptedFiles, getRootProps, getInputProps,   isFocused,
         isDragAccept,
         isDragReject} = useDropzone();
@@ -58,7 +49,6 @@ function UploadComponent({ setFile, type }) {
         isDragAccept,
         isDragReject
     ]);
-    const imagesListRef = ref(storage, "images/");
 
     useEffect(() => {
         console.log("useEffect called");

@@ -179,7 +179,7 @@ export function UpdateProductInfo({rowData}) {
             }
             args = { ...args, ...typeValueObject }
             //const args = {...formData,  ...uploadValues  };
-            let result = await user.callFunction(functionName, args);
+            await user.callFunction(functionName, args);
             toast.current.show({severity: 'success', summary: 'Successful', detail: 'Product Info Updated', life: 3000});
             setShowProductInfo(false);
             window.location.reload(true);
