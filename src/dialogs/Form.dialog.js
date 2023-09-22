@@ -7,12 +7,9 @@ import {UserContext} from "../contexts/user.context";
 import {Toast} from "primereact/toast";
 import {Calendar} from "primereact/calendar";
 import {InputText} from "primereact/inputtext";
-import {FileUpload} from "primereact/fileupload";
-import AWS from "aws-sdk";
 import UploadComponent from "./FIleUpload/UploadComponent";
-import {getDownloadURL, ref, uploadBytes} from "firebase/storage";
-import {storage} from "../firebase";
 import {v4} from "uuid";
+import axios from 'axios';
 
 const allTypes = [   "uv_vis_nil_files" ,
     "jv_files" ,
@@ -40,14 +37,40 @@ export function UpdateProductInfo({rowData}) {
 
         // const typeValues = file?.[type] || [];
         // typeValues.push(...acceptedFiles);
-        debugger
         setFile(prev => (
             { ...prev, [type] : [ ...acceptedFiles ] }
         ))
     }
 
+
+    const fetch_url_from_name = async (names) => {
+        //debugger
+        try {
+            const allApiCalls = names.map(name => {
+                    return axios.post(
+                        'http://127.0.0.1:8000/file_link',
+                        '',
+                        {
+                            params: {
+                                'file_name': name
+                            },
+                            headers: {
+                                'accept': 'application/json',
+                                'content-type': 'application/x-www-form-urlencoded'
+                            }
+                        }
+                    )
+                }
+            )
+           const vals = await Promise.all(allApiCalls)
+            console.log(vals)
+            return vals;
+        }
+        catch (err){
+            console.log(err)
+        }
+    }
     const uploadFile = async (fileTypeVal) => {
-        debugger
         try {
             // for ( let j=0; j<allTypes.length; j++) {
             //     let typeVal = allTypes[j];
@@ -60,15 +83,30 @@ export function UpdateProductInfo({rowData}) {
                 for (let i = 0; i < file?.[typeVal]?.length || 0; i++) {
                     const fileVal = file?.[typeVal]?.[i]
                     const uuidVal = v4() + '_' + file?.[typeVal]?.[i].name
-                    const imageRef = ref(storage, `images/${uuidVal}`);
-                    let uploadPromise = await uploadBytes(imageRef, fileVal)
+                    // const imageRef = ref(storage, `images/${uuidVal}`);
+                    // let uploadPromise = await uploadBytes(imageRef, fileVal)
+                    const form = new FormData();
+                    const url = 'http://24.199.79.23:8000/upload_file/';
+                    form.append('file', fileVal, uuidVal);
                     newFileAddedTypeWise.push(uuidVal);
-                    promiseArr.push(uploadPromise);
-                }
+                    try{
+                        const response = await axios.post(url, form, {
+                            headers: {
+                                'Accept': 'application/json',
+                                'Content-Type': 'multipart/form-data',
+                            },
+                        });
+                        console.log(response.data);
+
+                    } catch (error) {
+                        console.error('Error during file upload: ', error);
+                    }
+                    // promiseArr.push(uploadPromise);
+                };
                 const prevTypeWise = imageNames[typeVal] || [];
                 newImageNames = {...imageNames, [typeVal]: [...prevTypeWise, ...newFileAddedTypeWise]}
                 setImageNames(prev => ({...prev, [typeVal]: [...prevTypeWise, ...newFileAddedTypeWise]}))
-                await Promise.all(promiseArr)
+                // await Promise.all(promiseArr)
 
 
             return newImageNames;
@@ -80,10 +118,33 @@ export function UpdateProductInfo({rowData}) {
     };
 
 
-    useEffect(()=>{
-        setFormData({
-            ...rowData
-        })
+    useEffect( ()=>{
+        const setTheFormData = async () => {
+
+            for(let i in allTypes){
+                //debugger
+                const conserveNames = rowData[allTypes[i]];
+                rowData[allTypes[i]] = await fetch_url_from_name(
+                    rowData[allTypes[i]]).then(
+                        vals => vals?.map(
+                            (val,idx) =>{
+                    return {url : val.data.url, name : conserveNames[idx]}}
+                ))
+            }
+            setFormData({
+                ...rowData
+            })
+        }
+
+        setTheFormData()
+        // debugger
+        // console.log(rowData)
+        // for(let i in allTypes){
+        //
+        // }
+        // setFormData({
+        //     ...rowData
+        // })
     },[])
 
 
@@ -377,7 +438,8 @@ export function UpdateProductInfo({rowData}) {
                                 </label><br/>
                                 <div>
                                     { formData?.["uv_vis_nil_files"]?.map(val => <div>
-                                        <li>{val}</li>
+                                        {/*{JSON.stringify(val)}*/}
+                                        <li><a href={val?.url}>{val?.name}</a></li>
                                     </div>) }
                                 </div>
                             </div>
@@ -417,7 +479,8 @@ export function UpdateProductInfo({rowData}) {
                                 </label><br/>
                                 <div>
                                     { formData?.["jv_files"]?.map(val => <div>
-                                        <li>{val}</li>
+                                        <li><a href={val?.url}>{val?.name}</a>
+                                        </li>
                                     </div>) }
                                 </div>
                             </div>
@@ -456,9 +519,11 @@ export function UpdateProductInfo({rowData}) {
                                     Uploaded Files
                                 </label><br/>
                                 <div>
-                                    {/*{ formData?.["profilometry_files"]?.map(val => <div>*/}
-                                    {/*    <li>{val}</li>*/}
-                                    {/*</div>) }*/}
+                                    { formData?.["profilometry_files"]?.map(  val => <div>
+                                        <li>
+                                            <a href={val?.url}>{val?.name}</a>
+                                        </li>
+                                    </div>) }
                                 </div>
                             </div>
                             {/*<Button label="Submit" onClick={saveProduct}/>*/}
@@ -520,8 +585,10 @@ export function UpdateProductInfo({rowData}) {
                                     Uploaded Files
                                 </label><br/>
                                 <div>
-                                    { formData?.["giwaxs_files"]?.map(val => <div>
-                                        <li>{val}</li>
+                                    { formData?.["giwaxs_files"]?.map(  val => <div>
+                                        <li>
+                                            <a href={val?.url}>{val?.name}</a>
+                                        </li>
                                     </div>) }
                                 </div>
                             </div>
@@ -561,7 +628,9 @@ export function UpdateProductInfo({rowData}) {
                                 </label><br/>
                                 <div>
                                     { formData?.["skpm_files"]?.map(val => <div>
-                                        <li>{val}</li>
+                                        <li>
+                                            <a href={val?.url}>{val?.name}</a>
+                                        </li>
                                     </div>) }
                                 </div>
                             </div>
