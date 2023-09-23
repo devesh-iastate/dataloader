@@ -49,7 +49,7 @@ export function UpdateProductInfo({rowData}) {
         try {
             const allApiCalls = names.map(name => {
                     return axios.post(
-                        'http://127.0.0.1:8000/file_link',
+                        'http://24.199.79.23:8000/file_link',
                         '',
                         {
                             params: {
@@ -121,11 +121,12 @@ export function UpdateProductInfo({rowData}) {
 
     useEffect( ()=>{
         const setTheFormData = async () => {
+            //debugger
 
             let newFileNames = {}
 
             for(let i in allTypes){
-                //debugger
+
                 const conserveNames = rowData[allTypes[i]];
                 newFileNames[allTypes[i]] = await fetch_url_from_name(
                     rowData[allTypes[i]]).then(
