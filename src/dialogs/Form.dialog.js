@@ -27,6 +27,7 @@ export function UpdateProductInfo({rowData}) {
 
     const [showProductInfo, setShowProductInfo] = useState(false);
     const [formData, setFormData] = useState( null);
+    const [fileNames, setFileNames] = useState({});//[...rowData?.uv_vis_nil_files, ...rowData?.jv_files, ...rowData?.profilometry_files, ...rowData?.giwaxs_files, ...rowData?.skpm_files] || [
     const [imageNames, setImageNames] = useState([])  ;
     const [submitted, setSubmitted] = useState(false);
     const toast = useRef(null);
@@ -121,16 +122,19 @@ export function UpdateProductInfo({rowData}) {
     useEffect( ()=>{
         const setTheFormData = async () => {
 
+            let newFileNames = {}
+
             for(let i in allTypes){
                 //debugger
                 const conserveNames = rowData[allTypes[i]];
-                rowData[allTypes[i]] = await fetch_url_from_name(
+                newFileNames[allTypes[i]] = await fetch_url_from_name(
                     rowData[allTypes[i]]).then(
                         vals => vals?.map(
                             (val,idx) =>{
                     return {url : val.data.url, name : conserveNames[idx]}}
                 ))
             }
+            setFileNames(newFileNames)
             setFormData({
                 ...rowData
             })
@@ -437,7 +441,7 @@ export function UpdateProductInfo({rowData}) {
                                     Uploaded Files
                                 </label><br/>
                                 <div>
-                                    { formData?.["uv_vis_nil_files"]?.map(val => <div>
+                                    { fileNames?.["uv_vis_nil_files"]?.map(val => <div>
                                         {/*{JSON.stringify(val)}*/}
                                         <li><a href={val?.url}>{val?.name}</a></li>
                                     </div>) }
@@ -519,7 +523,7 @@ export function UpdateProductInfo({rowData}) {
                                     Uploaded Files
                                 </label><br/>
                                 <div>
-                                    { formData?.["profilometry_files"]?.map(  val => <div>
+                                    { fileNames?.["profilometry_files"]?.map(  val => <div>
                                         <li>
                                             <a href={val?.url}>{val?.name}</a>
                                         </li>
@@ -585,7 +589,7 @@ export function UpdateProductInfo({rowData}) {
                                     Uploaded Files
                                 </label><br/>
                                 <div>
-                                    { formData?.["giwaxs_files"]?.map(  val => <div>
+                                    { fileNames?.["giwaxs_files"]?.map(  val => <div>
                                         <li>
                                             <a href={val?.url}>{val?.name}</a>
                                         </li>
@@ -627,7 +631,7 @@ export function UpdateProductInfo({rowData}) {
                                     Uploaded Files
                                 </label><br/>
                                 <div>
-                                    { formData?.["skpm_files"]?.map(val => <div>
+                                    { fileNames?.["skpm_files"]?.map(val => <div>
                                         <li>
                                             <a href={val?.url}>{val?.name}</a>
                                         </li>
