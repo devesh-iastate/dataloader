@@ -44,6 +44,7 @@ export function UpdateProductInfo({rowData}) {
     }
 
 
+
     const fetch_url_from_name = async (names) => {
         //debugger
         try {
