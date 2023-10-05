@@ -88,9 +88,13 @@ export function UpdateProductInfo({rowData}) {
                     // const imageRef = ref(storage, `images/${uuidVal}`);
                     // let uploadPromise = await uploadBytes(imageRef, fileVal)
                     const form = new FormData();
-                    const url = 'http://24.199.79.23:8000/upload_file/';
+                    const url = 'http://localhost:8000/upload_file/';
+                    await user.refreshAccessToken();
+                    const userToken = await user.accessToken;
                     form.append('file', fileVal, uuidVal);
-                    newFileAddedTypeWise.push(uuidVal);
+                    form.append('token', userToken);
+                    form.append('folder', formData?._id.toHexString());
+                    //newFileAddedTypeWise.push(uuidVal);
                     try{
                         const response = await axios.post(url, form, {
                             headers: {
@@ -98,13 +102,15 @@ export function UpdateProductInfo({rowData}) {
                                 'Content-Type': 'multipart/form-data',
                             },
                         });
-                        console.log(response.data);
+                        debugger
+                        newFileAddedTypeWise.push({url : response?.data?.url, name : uuidVal});
 
                     } catch (error) {
                         console.error('Error during file upload: ', error);
+                        return false;
                     }
                     // promiseArr.push(uploadPromise);
-                };
+                }
                 const prevTypeWise = imageNames[typeVal] || [];
                 newImageNames = {...imageNames, [typeVal]: [...prevTypeWise, ...newFileAddedTypeWise]}
                 setImageNames(prev => ({...prev, [typeVal]: [...prevTypeWise, ...newFileAddedTypeWise]}))
@@ -121,46 +127,20 @@ export function UpdateProductInfo({rowData}) {
 
 
     useEffect( ()=>{
-        const setTheFormData = async () => {
-            //debugger
-
-            let newFileNames = {}
-
-            for(let i in allTypes){
-
-                const conserveNames = rowData[allTypes[i]];
-                newFileNames[allTypes[i]] = await fetch_url_from_name(
-                    rowData[allTypes[i]]).then(
-                        vals => vals?.map(
-                            (val,idx) =>{
-                    return {url : val.data.url, name : conserveNames[idx]}}
-                ))
-            }
-            setFileNames(newFileNames)
-            setFormData({
-                ...rowData
-            })
-        }
-
-        setTheFormData()
-        // debugger
-        // console.log(rowData)
-        // for(let i in allTypes){
-        //
-        // }
-        // setFormData({
-        //     ...rowData
-        // })
+        setFormData({
+            ...rowData
+        })
     },[])
 
 
     function hideProductInfo() {
-        setFormData({...rowData})
+        setFormData({})
         setShowProductInfo(false);
     }
     const openNew = () => {
            // setProduct(emptyProduct);
             // setSubmitted(false);
+        setFormData({...rowData})
             setShowProductInfo(true);
 
         };
@@ -169,7 +149,7 @@ export function UpdateProductInfo({rowData}) {
 
         try{
             let uploadValues = await uploadFile(fileTypeVal);
-            debugger
+            // debugger
             if(!uploadValues){
                 toast.current.show({severity: 'error', summary: 'Error', detail: 'Error in uploading files', life: 3000});
                 return;
@@ -179,7 +159,7 @@ export function UpdateProductInfo({rowData}) {
             let typeValueObject = {}
             for( const typeVal of allTypes){
                 const formTypeWise = formData?.[typeVal] || [];
-                if( uploadValues?.[typeVal] === undefined || uploadValues?.[typeVal]?.length === 0) continue;
+                if( uploadValues?.[typeVal] === undefined || uploadValues?.[typeVal]?.url?.length === 0) continue;
                 formTypeWise.push(...uploadValues?.[typeVal])
                 typeValueObject = { ...typeValueObject, [typeVal] : formTypeWise}
             }
@@ -443,7 +423,7 @@ export function UpdateProductInfo({rowData}) {
                                     Uploaded Files
                                 </label><br/>
                                 <div>
-                                    { fileNames?.["uv_vis_nil_files"]?.map(val => <div>
+                                    { formData?.["uv_vis_nil_files"]?.map(val => <div>
                                         {/*{JSON.stringify(val)}*/}
                                         <li><a href={val?.url}>{val?.name}</a></li>
                                     </div>) }
@@ -525,7 +505,7 @@ export function UpdateProductInfo({rowData}) {
                                     Uploaded Files
                                 </label><br/>
                                 <div>
-                                    { fileNames?.["profilometry_files"]?.map(  val => <div>
+                                    { formData?.["profilometry_files"]?.map(  val => <div>
                                         <li>
                                             <a href={val?.url}>{val?.name}</a>
                                         </li>
@@ -591,7 +571,7 @@ export function UpdateProductInfo({rowData}) {
                                     Uploaded Files
                                 </label><br/>
                                 <div>
-                                    { fileNames?.["giwaxs_files"]?.map(  val => <div>
+                                    { formData?.["giwaxs_files"]?.map(  val => <div>
                                         <li>
                                             <a href={val?.url}>{val?.name}</a>
                                         </li>
@@ -633,7 +613,7 @@ export function UpdateProductInfo({rowData}) {
                                     Uploaded Files
                                 </label><br/>
                                 <div>
-                                    { fileNames?.["skpm_files"]?.map(val => <div>
+                                    { formData?.["skpm_files"]?.map(val => <div>
                                         <li>
                                             <a href={val?.url}>{val?.name}</a>
                                         </li>

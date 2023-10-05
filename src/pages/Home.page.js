@@ -163,7 +163,7 @@ export default function Home() {
     const actionBodyTemplate = (rowData) => {
         return (
             <React.Fragment>
-
+                {console.log(rowData)}
                 {/*<Button icon="pi pi-plus" rounded outlined className="mr-2" onClick={() => addProductInfo(rowData)} />*/}
                 <UpdateProductInfo rowData = {rowData} />
                 <QRCodeViewer rowData={rowData}/>
