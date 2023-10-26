@@ -10,6 +10,7 @@ import {QRScanner} from "../dialogs/QRScanner.dialog";
 import {UpdateProductInfo} from "../dialogs/Form.dialog";
 import {InputText} from "primereact/inputtext";
 import {DataForm} from "../dialogs/NewProduct.dialog";
+import {ChartMaker} from "../dialogs/ChartMaker";
 
 
 
@@ -144,7 +145,7 @@ export default function Home() {
                 {/*<NewProduct />*/}
                 <DataForm />
                 <QRScanner setGlobalFilter={(e)=>setFilterText(e)} />
-
+                <ChartMaker />
 
             </div>
         );

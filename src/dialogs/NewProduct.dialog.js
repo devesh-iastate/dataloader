@@ -35,8 +35,8 @@ export function DataForm(){
         fab_box: '',
         fab_humidity: '',
         other: '',
-        uv_vis_nil_files : [],
-        jv_files : [],
+        uv_vis_nir_files : [],
+        iv_files : [],
         profilometry_files : [],
         giwaxs_files : [],
         skpm_files : []
@@ -95,6 +95,20 @@ export function DataForm(){
     }
 
 
+    const [inputFields, setInputFields] = useState([
+        { type: '', value: '' }
+    ]);
+
+    function handleChangeInput(index, event) {
+        let data = [...inputFields];
+        data[index][event.target.name] = event.target.value;
+        setInputFields(data);
+    }
+
+    function addFields() {
+        let newField = { type: '', value: '' }
+        setInputFields([...inputFields, newField])
+    }
 
     return(
 
@@ -166,6 +180,25 @@ export function DataForm(){
                         Solvent/co-solvent info :
                     </label>
                     <InputText id="solvent" value={product.solvent} onChange={(e) => onInputChange(e, 'solvent')}  />
+                    {inputFields.map((input, index) => {
+                        return (
+                            <div key={index}>
+                                <input
+                                    name='type'
+                                    placeholder='Type'
+                                    value={input.type}
+                                    onChange={event => handleChangeInput(index, event)}
+                                />
+                                <input
+                                    name='value'
+                                    placeholder='Value'
+                                    value={input.value}
+                                    onChange={event => handleChangeInput(index, event)}
+                                />
+                            </div>
+                        )
+                    })}
+                    <button onClick={addFields}>Add More..</button>
                 </div>
                 <div className="font-bold underline">
                     Dopant Info:

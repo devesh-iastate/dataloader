@@ -3,6 +3,7 @@ import {Dialog} from "primereact/dialog";
 import React, {useState} from "react";
 import {Button} from "primereact/button";
 
+
 export function QRScanner({setGlobalFilter}){
     const [showQRScanDialog, setShowQRScanDialog] = useState(false);
     const [scanResult, setScanResult] = useState('');

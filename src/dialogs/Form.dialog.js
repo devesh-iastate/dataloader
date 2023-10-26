@@ -10,9 +10,10 @@ import {InputText} from "primereact/inputtext";
 import UploadComponent from "./FIleUpload/UploadComponent";
 import {v4} from "uuid";
 import axios from 'axios';
+import {CsvDialogButton} from "./CsvDialogButton";
 
-const allTypes = [   "uv_vis_nil_files" ,
-    "jv_files" ,
+const allTypes = [   "uv_vis_nir_files" ,
+    "iv_files" ,
     "profilometry_files" ,
     "giwaxs_files" ,
     "skpm_files" ]
@@ -27,7 +28,7 @@ export function UpdateProductInfo({rowData}) {
 
     const [showProductInfo, setShowProductInfo] = useState(false);
     const [formData, setFormData] = useState( null);
-    const [fileNames, setFileNames] = useState({});//[...rowData?.uv_vis_nil_files, ...rowData?.jv_files, ...rowData?.profilometry_files, ...rowData?.giwaxs_files, ...rowData?.skpm_files] || [
+    const [fileNames, setFileNames] = useState({});//[...rowData?.uv_vis_nir_files, ...rowData?.iv_files, ...rowData?.profilometry_files, ...rowData?.giwaxs_files, ...rowData?.skpm_files] || [
     const [imageNames, setImageNames] = useState([])  ;
     const [submitted, setSubmitted] = useState(false);
     const toast = useRef(null);
@@ -43,35 +44,6 @@ export function UpdateProductInfo({rowData}) {
         ))
     }
 
-
-
-    const fetch_url_from_name = async (names) => {
-        //debugger
-        try {
-            const allApiCalls = names.map(name => {
-                    return axios.post(
-                        'http://24.199.79.23:8000/file_link',
-                        '',
-                        {
-                            params: {
-                                'file_name': name
-                            },
-                            headers: {
-                                'accept': 'application/json',
-                                'content-type': 'application/x-www-form-urlencoded'
-                            }
-                        }
-                    )
-                }
-            )
-           const vals = await Promise.all(allApiCalls)
-            console.log(vals)
-            return vals;
-        }
-        catch (err){
-            console.log(err)
-        }
-    }
     const uploadFile = async (fileTypeVal) => {
         try {
             // for ( let j=0; j<allTypes.length; j++) {
@@ -88,7 +60,8 @@ export function UpdateProductInfo({rowData}) {
                     // const imageRef = ref(storage, `images/${uuidVal}`);
                     // let uploadPromise = await uploadBytes(imageRef, fileVal)
                     const form = new FormData();
-                    const url = 'http://localhost:8000/upload_file/';
+                    const url = process.env.REACT_APP_DIGITAL_OCEAN_URL;
+                    // const url = "http://127.0.0.1:8000/upload_file"
                     await user.refreshAccessToken();
                     const userToken = await user.accessToken;
                     form.append('file', fileVal, uuidVal);
@@ -392,7 +365,7 @@ export function UpdateProductInfo({rowData}) {
                             <Button label="Submit" onClick={()=>saveProduct(allTypes[0])}/>
                         </div>
                     </TabPanel>
-                    <TabPanel header="UV-Vis-NIL">
+                    <TabPanel header="UV-Vis-NIR">
                         <div>
                             <div className="field">
                                 <label className="font-bold">
@@ -416,47 +389,50 @@ export function UpdateProductInfo({rowData}) {
                                 <label className="font-bold">
                                     Upload
                                 </label><br/>
-                                <UploadComponent setFile={functionToSetFiles} type={"uv_vis_nil_files"} />
+                                <UploadComponent setFile={functionToSetFiles} type={"uv_vis_nir_files"} />
                             </div>
                             <div>
                                 <label className="font-bold">
                                     Uploaded Files
                                 </label><br/>
                                 <div>
-                                    { formData?.["uv_vis_nil_files"]?.map(val => <div>
+                                    { formData?.["uv_vis_nir_files"]?.map(val => <div>
                                         {/*{JSON.stringify(val)}*/}
-                                        <li><a href={val?.url}>{val?.name}</a></li>
+                                        <li><a href={val?.url}>{val?.name}</a> {val?.name.endsWith('.csv') && (
+                                            <CsvDialogButton url={val?.url}  experiment_name={formData?.experiment_name} experiment_type="UV-Vis-NIR"/>
+
+                                        )}</li>
                                     </div>) }
                                 </div>
                             </div>
                             <Button label="Submit" onClick={()=>saveProduct(allTypes[0])}/>
                         </div>
                     </TabPanel>
-                    <TabPanel header="J-V">
+                    <TabPanel header="I-V">
                         <div>
                             <div className="field">
                                 <label className="font-bold">
                                     Instrument Info
                                 </label><br/>
-                                <InputTextarea name='jv_instrument' autoResize value={formData?.jv_instrument} onChange={e=> setFormDataValue(e.target.name, e.target.value)} required rows={3} cols={20} />
+                                <InputTextarea name='iv_instrument' autoResize value={formData?.iv_instrument} onChange={e=> setFormDataValue(e.target.name, e.target.value)} required rows={3} cols={20} />
                             </div>
                             <div className="field">
                                 <label className="font-bold">
                                     Output Format
                                 </label><br/>
-                                <InputTextarea name='jv_format' autoResize value={formData?.jv_format} onChange={e=> setFormDataValue(e.target.name, e.target.value)} required rows={3} cols={20} />
+                                <InputTextarea name='iv_format' autoResize value={formData?.iv_format} onChange={e=> setFormDataValue(e.target.name, e.target.value)} required rows={3} cols={20} />
                             </div>
                             <div className="field">
                                 <label className="font-bold">
                                     Features to be extracted
                                 </label><br/>
-                                <InputTextarea name='jv_features' autoResize value={formData?.jv_features} onChange={e=> setFormDataValue(e.target.name, e.target.value)} required rows={3} cols={20} />
+                                <InputTextarea name='iv_features' autoResize value={formData?.iv_features} onChange={e=> setFormDataValue(e.target.name, e.target.value)} required rows={3} cols={20} />
                             </div>
                             <div className="field">
                                 <label className="font-bold">
                                     Upload
                                 </label><br/>
-                                <UploadComponent setFile={functionToSetFiles} type={"jv_files"} />
+                                <UploadComponent setFile={functionToSetFiles} type={"iv_files"} />
                             </div>
 
                             <div>
@@ -464,8 +440,10 @@ export function UpdateProductInfo({rowData}) {
                                     Uploaded Files
                                 </label><br/>
                                 <div>
-                                    { formData?.["jv_files"]?.map(val => <div>
-                                        <li><a href={val?.url}>{val?.name}</a>
+                                    { formData?.["iv_files"]?.map(val => <div>
+                                        <li><a href={val?.url}>{val?.name}</a> {val?.name.endsWith('.csv') && (
+                                            <CsvDialogButton url={val?.url} experiment_name={val?.experiment_name} experiment_type="I-V"/>
+                                        )}
                                         </li>
                                     </div>) }
                                 </div>
@@ -507,7 +485,9 @@ export function UpdateProductInfo({rowData}) {
                                 <div>
                                     { formData?.["profilometry_files"]?.map(  val => <div>
                                         <li>
-                                            <a href={val?.url}>{val?.name}</a>
+                                            <a href={val?.url}>{val?.name}</a>{val?.name.endsWith('.csv') && (
+                                            <CsvDialogButton url={val?.url}  experiment_name={val?.experiment_name} experiment_type="Profilometry"/>
+                                        )}
                                         </li>
                                     </div>) }
                                 </div>
@@ -516,7 +496,7 @@ export function UpdateProductInfo({rowData}) {
                             <Button label="Submit" onClick={()=>saveProduct(allTypes[2])}/>
                         </div>
                     </TabPanel>
-                    <TabPanel header="Conductivity (from J-V & profilometry)">
+                    <TabPanel header="Conductivity (from I-V & profilometry)">
                         <div>
                             <div className="field">
                                 <label className="font-bold">
@@ -573,7 +553,9 @@ export function UpdateProductInfo({rowData}) {
                                 <div>
                                     { formData?.["giwaxs_files"]?.map(  val => <div>
                                         <li>
-                                            <a href={val?.url}>{val?.name}</a>
+                                            <a href={val?.url}>{val?.name}</a>{val?.name.endsWith('.csv') && (
+                                            <CsvDialogButton url={val?.url}  experiment_name={val?.experiment_name} experiment_type="GIWAXS (NSLS II)"/>
+                                        )}
                                         </li>
                                     </div>) }
                                 </div>
@@ -615,7 +597,9 @@ export function UpdateProductInfo({rowData}) {
                                 <div>
                                     { formData?.["skpm_files"]?.map(val => <div>
                                         <li>
-                                            <a href={val?.url}>{val?.name}</a>
+                                            <a href={val?.url}>{val?.name}</a>{val?.name.endsWith('.csv') && (
+                                                <CsvDialogButton url={val?.url}  experiment_name={val?.experiment_name} experiment_type="SKPM (UW)"/>
+                                            )}
                                         </li>
                                     </div>) }
                                 </div>
